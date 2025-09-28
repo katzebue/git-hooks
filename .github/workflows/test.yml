@@ -1,0 +1,33 @@
+name: Test Git Hooks
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - '.editorconfig'
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - '.editorconfig'
+
+jobs:
+  test:
+    runs-on: [ ubuntu-latest ]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y bats shellcheck
+
+      - name: Lint script
+        run: shellcheck src/commit-msg
+
+      - name: Run hook tests
+        run: |
+          cd tests
+          bats commit_msg.bats

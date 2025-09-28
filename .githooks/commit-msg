@@ -1,0 +1,66 @@
+#!/bin/sh
+#
+# Commit-msg hook enforces the following rules:
+# 1. Commit must start with one or more tickets (e.g., WEB-123 API-456)
+# 2. Ticket(s) must be UPPERCASE
+# 3. Must include a valid type after the ticket(s):
+#    feat, fix, build, chore, ci, docs, style, refactor, perf, test
+# 4. Optionally supports prefixes:
+#    draft:, Draft:, fixup!, Fixup!
+# 5. Supports breaking changes with "!" after type or type(scope)
+#
+
+# 🔹 Base regex parts
+TICKET_PATTERN='([A-Z]+-[0-9]+\s+)+'
+TYPE_PATTERN='(feat|fix|build|chore|ci|docs|style|refactor|perf|test)(\([a-zA-Z0-9_-]+\))?(!)?:'
+PREFIX_PATTERN='(draft:|Draft:|fixup!|Fixup!)'
+
+# 🔹 Combined patterns
+MAIN_PATTERN="^${TICKET_PATTERN}${TYPE_PATTERN}"
+PREFIXED_PATTERN="^${PREFIX_PATTERN}\s+${TICKET_PATTERN}${TYPE_PATTERN}"
+
+commit_message=$(cat "$1")
+
+# ✅ Allowed formats
+if echo "$commit_message" | grep -Eq "$MAIN_PATTERN"; then
+  exit 0
+fi
+
+if echo "$commit_message" | grep -Eq "$PREFIXED_PATTERN"; then
+  exit 0
+fi
+
+# ❌ Errors
+if ! echo "$commit_message" | grep -Eq "^(${PREFIX_PATTERN}\s+)?${TICKET_PATTERN}"; then
+  echo "❌ Error: commit message must start with ticket(s) in UPPERCASE format (e.g., WEB-123)."
+  echo "   Example: WEB-123 feat: add login button"
+  echo "            draft: WEB-123 feat: initial prototype"
+  exit 1
+fi
+
+if ! echo "$commit_message" | grep -Eq "^(${PREFIX_PATTERN}\s+)?${TICKET_PATTERN}${TYPE_PATTERN}"; then
+  echo "❌ Error: after ticket(s), you must specify a valid commit type."
+  echo "   Allowed types:"
+  echo "     feat      – a new feature"
+  echo "     fix       – a bug fix"
+  echo "     build     – changes to build system or dependencies"
+  echo "     chore     – maintenance tasks (configs, deps updates, cleanup)"
+  echo "     ci        – changes to CI/CD configuration or scripts"
+  echo "     docs      – documentation only changes"
+  echo "     style     – code style changes (formatting, spaces, semicolons)"
+  echo "     refactor  – code changes that neither fix a bug nor add a feature"
+  echo "     perf      – performance improvements"
+  echo "     test      – adding or updating tests"
+  echo ""
+  echo "   You may append '!' after type/scope for BREAKING CHANGES."
+  echo "   Examples:"
+  echo "     WEB-123 feat: add login button"
+  echo "     WEB-456 fix(auth): correct password hashing"
+  echo "     draft: API-789 docs: initial API documentation"
+  echo "     WEB-999 refactor!: change database schema (BREAKING CHANGE)"
+  echo "     fixup! WEB-111 perf(core): improve query performance"
+  exit 1
+fi
+
+echo "❌ Error: commit message does not follow required convention."
+exit 1
