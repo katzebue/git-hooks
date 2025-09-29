@@ -30,6 +30,10 @@ if echo "$commit_message" | grep -Eq "$PREFIXED_PATTERN"; then
   exit 0
 fi
 
+if echo "$commit_message" | grep -Eq "^Merge branch '.*' into '.*'$"; then
+  exit 0
+fi
+
 # ❌ Errors
 if ! echo "$commit_message" | grep -Eq "^(${PREFIX_PATTERN}\s+)?${TICKET_PATTERN}"; then
   echo "❌ Error: commit message must start with ticket(s) in UPPERCASE format (e.g., WEB-123)."

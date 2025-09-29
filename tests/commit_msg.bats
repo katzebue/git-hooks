@@ -46,6 +46,11 @@ run_hook_with_msg() {
   [ "$status" -eq 0 ]
 }
 
+@test "valid commit: merge branch" {
+  run_hook_with_msg "Merge branch 'dev' into 'feature/WEB-123-new-feature'"
+  [ "$status" -eq 0 ]
+}
+
 @test "invalid commit: missing ticket" {
   run_hook_with_msg "feat: add login button"
   [ "$status" -ne 0 ]
